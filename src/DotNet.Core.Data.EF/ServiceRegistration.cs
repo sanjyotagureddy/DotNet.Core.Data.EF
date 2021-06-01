@@ -9,7 +9,7 @@ namespace DotNet.Core.Data.EF
 {
   public static class ServiceRegistration
   {
-    public static IServiceCollection AddWmsCommonDataServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDataContextServices(this IServiceCollection services, IConfiguration configuration)
     {
       services.AddDbContext<ApplicationContext>(options =>
         options.UseSqlServer(configuration.GetConnectionString("ProductsDb")));

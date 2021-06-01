@@ -17,18 +17,21 @@ namespace DotNet.Core.Data.EF.Domain.EntitiesConfiguration
             {
                 new Product()
                 {
+                    Id = 1,
                     Description = "A description",
                     Name = "Product A",
                     Price = 49.99
                 },
                 new Product()
                 {
+                    Id = 2,
                     Description = "B description",
                     Name = "Product B",
                     Price = 29.99
                 },
                 new Product()
                 {
+                    Id = 3,
                     Description = "C description",
                     Name = "Product C",
                     Price = 89.99
