@@ -1,241 +1,169 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using DotNet.Core.Data.EF.Domain.Entities;
 using DotNet.Core.Data.EF.Persistence;
 using DotNet.Core.Data.EF.Repositories;
 using DotNet.Core.Data.EF.Repositories.Interfaces;
 using DotNet.Core.Data.EF.Test.FakeData;
-using Shouldly;
-using Xbehave;
+using FluentAssertions;
+using Xunit;
 
 namespace DotNet.Core.Data.EF.Test.Tests
 {
-  /// <summary>
-  /// Unit Tests for base Repository<T>
-  /// ProductRepository used as an entry point for testing purpose only 
-  /// </summary>
-  public class BaseRepositoryTests
-  {
-    private readonly ApplicationContext _context;
-    private readonly IProductRepository _repository;
-    public BaseRepositoryTests()
+    /// <summary>
+    /// Unit Tests for base Repository<T>
+    /// ProductRepository used as an entry point for testing purpose only 
+    /// </summary>
+    public class BaseRepositoryTests
     {
-
-      _context = DbInitializer.CreateFakeDatabase();
-      _repository = new ProductRepository(_context);
-    }
-
-
-    #region GET Tests
-
-    [Scenario]
-    public void GetAllAsyncReturnsAllProducts()
-    {
-
-      "Assertion"
-        .x(async () =>
+        private readonly ApplicationContext _context;
+        private readonly IProductRepository _repository;
+        public BaseRepositoryTests()
         {
-          var result = await _repository.GetAllAsync();
-          result.Count.ShouldBe(3);
-        });
-    }
 
-    [Scenario]
-    public void GetByIdAsyncProductExists()
-    {
-      "Assertion"
-        .x(async () =>
+            _context = DbInitializer.CreateFakeDatabase();
+            _repository = new ProductRepository(_context);
+        }
+
+        #region GET Tests
+
+        [Fact]
+        public async Task GetAllAsyncReturnsAllProductsAsync()
         {
-          var result = await _repository.GetByIdAsync(1);
-          result.ShouldNotBeNull();
-          result.Id.ShouldBe(1);
-        });
-    }
+            var result = await _repository.GetAllAsync();
+            result.Count.Should().Be(3);
+        }
 
-    [Scenario]
-    public void GetByIdProductNotExists()
-    {
-      "Assertion"
-        .x(async () =>
+        [Fact]
+        public async void GetByIdAsyncProductExists()
         {
-          var result = await _repository.GetByIdAsync(5);
-          result.ShouldBeNull();
-        });
-    }
+            var result = await _repository.GetByIdAsync(1);
+            result.Should().NotBeNull();
+            result.Id.Should().Be(1);
+        }
 
-    [Scenario]
-    public void GetAsyncWithPredicateProductExists()
-    {
-      "Assertion"
-        .x(async () =>
+        [Fact]
+        public async void GetByIdProductNotExists()
         {
-          var result = await _repository.GetAsync(x => x.Price == 49.99);
-          result.ShouldNotBeNull();
-          result.Count.ShouldBe(1);
-        });
-    }
+            var result = await _repository.GetByIdAsync(5);
+            result.Should().BeNull();
+        }
 
-    [Scenario]
-    public void GetAsyncWithPredicateProductNotExists()
-    {
-      "Assertion"
-        .x(async () =>
+        [Fact]
+        public async void GetAsyncWithPredicateProductExists()
         {
-          var result = await _repository.GetAsync(x => x.Price == 9876);
-          result.ShouldNotBeNull();
-          result.Count.ShouldBe(0);
-        });
-    }
+            var result = await _repository.GetAsync(x => x.Price == 49.99);
+            result.Should().NotBeNull();
+            result.Count.Should().Be(1);
+        }
 
-    [Scenario]
-    public void GetFirstOrDefaultAsyncPredicateProductExists()
-    {
-      "Assertion"
-        .x(async () =>
+        [Fact]
+        public async void GetAsyncWithPredicateProductNotExists()
         {
-          var result = await _repository.GetFirstOrDefaultAsync(x => x.Name == "Product A");
-          result.ShouldNotBeNull();
-        });
-    }
+            var result = await _repository.GetAsync(x => x.Price == 9876);
+            result.Should().NotBeNull();
+            result.Count.Should().Be(0);
+        }
 
-    [Scenario]
-    public void GetFirstOrDefaultAsyncPredicateProductNotExists()
-    {
-      "Assertion"
-        .x(async () =>
+        [Fact]
+        public async void GetFirstOrDefaultAsyncPredicateProductExists()
         {
-          var result = await _repository.GetFirstOrDefaultAsync(x => x.Name == "xyz132");
-          result.ShouldBeNull();
-        });
-    }
+            var result = await _repository.GetFirstOrDefaultAsync(x => x.Name == "Product A");
+            result.Should().NotBeNull();
+        }
 
-    #endregion
-
-    #region ADD Tests
-
-    [Scenario]
-    public void AddAsyncProduct()
-    {
-      Product product = null;
-      "Act"
-        .x(async () =>
+        [Fact]
+        public async void GetFirstOrDefaultAsyncPredicateProductNotExists()
         {
-          product = await _repository.AddAsync(GetMockProductToAdd());
-          await _context.SaveChangesAsync();
-        });
+            var result = await _repository.GetFirstOrDefaultAsync(x => x.Name == "xyz132");
+            result.Should().BeNull();
+        }
 
-      "Assertion"
-        .x(() =>
-       {
-         product.ShouldNotBeNull();
-         product.Id.ShouldBe(4);
-       });
-    }
+        #endregion
 
-    [Scenario]
-    public void AddRangeAsyncProducts()
-    {
-      "Act"
-        .x(async () =>
+        #region ADD Tests
+
+        [Fact]
+        public async void AddAsyncProduct()
         {
-          await _repository.AddRangeAsync(GetMockProductListToAdd());
-          await _context.SaveChangesAsync();
-        });
+            var product = await _repository.AddAsync(GetMockProductToAdd());
+            await _context.SaveChangesAsync();
 
-      "Assertion"
-        .x(async () =>
+            product.Should().NotBeNull();
+            product.Id.Should().Be(4);
+        }
+
+        [Fact]
+        public async void AddRangeAsyncProducts()
         {
-          var result = await _repository.GetAllAsync();
-          result.ShouldNotBeNull();
-          result.Count.ShouldBe(5);
-        });
-    }
+            await _repository.AddRangeAsync(GetMockProductListToAdd());
+            await _context.SaveChangesAsync();
 
-    #endregion
+            var result = await _repository.GetAllAsync();
+            result.Should().NotBeNull();
+            result.Count.Should().Be(5);
+        }
 
-    #region UPDATE Tests
+        #endregion
 
-    [Scenario]
-    public void UpdateAsyncProduct()
-    {
-      Product product = null;
-      "Arrange".x(async () =>
-      {
-        product = await _repository.GetByIdAsync(1);
-        product.Name = "Product X";
-        product.Price = 157.2;
-      });
+        #region UPDATE Tests
 
-      "Act"
-      .x(async () =>
-      {
-        await _repository.UpdateAsync(product);
-        await _context.SaveChangesAsync();
-
-      });
-
-      "Assertion"
-        .x(async () =>
+        [Fact]
+        public async void UpdateAsyncProduct()
         {
-          var result = await _repository.GetByIdAsync(1);
-          result.Name.ShouldBe("Product X");
-          result.Price.ShouldBe(157.2);
+            var product = await _repository.GetByIdAsync(1);
+            product.Name = "Product X";
+            product.Price = 157.2;
 
-        });
-    }
+            await _repository.UpdateAsync(product);
+            await _context.SaveChangesAsync();
 
-    #endregion
+            var result = await _repository.GetByIdAsync(1);
+            result.Name.Should().Be("Product X");
+            result.Price.Should().Be(157.2);
+        }
 
-    #region DELETE Tests
+        #endregion
 
-    [Scenario]
-    public void DeleteAsyncProductExists()
-    {
-      "Act"
-        .x(async () =>
+        #region DELETE Tests
+
+        [Fact]
+        public async void DeleteAsyncProductExists()
         {
-          var product = await _repository.GetByIdAsync(1);
-          await _repository.DeleteAsync(product);
-          await _context.SaveChangesAsync();
-        });
+            var product = await _repository.GetByIdAsync(1);
+            await _repository.DeleteAsync(product);
+            await _context.SaveChangesAsync();
 
-      "Assertion"
-        .x(async () =>
+            var result = await _repository.GetByIdAsync(1);
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public async void DeleteAsyncProductNotExists()
         {
-          var result = await _repository.GetByIdAsync(1);
-          result.ShouldBeNull();
-        });
-    }
-
-    [Scenario]
-    public void DeleteAsyncProductNotExists()
-    {
-      "Assertion"
-        .x(async () =>
-        {
-          var product = await _repository.GetByIdAsync(50);
-          product.ShouldBeNull();
-        });
-    }
+            var product = await _repository.GetByIdAsync(50);
+            product.Should().BeNull();
+        }
 
 
-    #endregion
+        #endregion
 
 
-    #region Private Methods
+        #region Private Methods
 
-    private Product GetMockProductToAdd() =>
-        new Product()
-        {
-            Id = 4,
-            Description = "D description",
-            Name = "Product D",
-            Price = 49.99
-        };
+        private Product GetMockProductToAdd() =>
+            new Product()
+            {
+                Id = 4,
+                Description = "D description",
+                Name = "Product D",
+                Price = 49.99
+            };
 
-    private IEnumerable<Product> GetMockProductListToAdd() =>
-      new List<Product>()
-      {
+        private IEnumerable<Product> GetMockProductListToAdd() =>
+          new List<Product>()
+          {
           new Product()
           {
               Id = 5,
@@ -250,8 +178,8 @@ namespace DotNet.Core.Data.EF.Test.Tests
               Name = "Product F",
               Price = 29.99
           }
-      }.ToList();
+          }.ToList();
 
-    #endregion
-  }
+        #endregion
+    }
 }
